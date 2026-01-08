@@ -22,25 +22,22 @@ import json
 
 @xai_component
 class HubSpotClient(Component):
-    """Initialize a HubSpot API client.
+    """Initialize a HubSpot API client and store it in context.
 
-    Creates a HubSpot client instance that can be used by other HubSpot components.
-    Requires a HubSpot API access token.
+    Creates a HubSpot client instance and stores it in ctx['hubspot_client']
+    for use by all other HubSpot components. This component should be used
+    once at the start of a workflow.
 
     #### inPorts:
     - access_token: HubSpot API access token (private app token).
-
-    #### outPorts:
-    - client: Initialized HubSpot client instance.
     """
 
     access_token: InCompArg[str]
-    client: OutArg[any]
 
     def execute(self, ctx) -> None:
         client = HubSpot(access_token=self.access_token.value)
-        self.client.value = client
-        print("HubSpot client initialized successfully")
+        ctx['hubspot_client'] = client
+        print("HubSpot client initialized and stored in context")
 
 
 # ==================== CONTACT COMPONENTS ====================
@@ -49,8 +46,9 @@ class HubSpotClient(Component):
 class HubSpotCreateContact(Component):
     """Create a new contact in HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - email: Contact email address.
     - firstname: Contact first name.
     - lastname: Contact last name.
@@ -63,7 +61,6 @@ class HubSpotCreateContact(Component):
     - contact: Full contact object.
     """
 
-    client: InCompArg[any]
     email: InCompArg[str]
     firstname: InArg[str]
     lastname: InArg[str]
@@ -91,7 +88,7 @@ class HubSpotCreateContact(Component):
             props.update(self.properties.value)
 
         contact_input = ContactInput(properties=props)
-        result = self.client.value.crm.contacts.basic_api.create(
+        result = ctx['hubspot_client'].crm.contacts.basic_api.create(
             simple_public_object_input_for_create=contact_input
         )
 
@@ -104,8 +101,9 @@ class HubSpotCreateContact(Component):
 class HubSpotGetContact(Component):
     """Get a contact by ID from HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - contact_id: ID of the contact to retrieve.
     - properties: List of properties to retrieve (optional).
 
@@ -113,7 +111,6 @@ class HubSpotGetContact(Component):
     - contact: Contact object as dict.
     """
 
-    client: InCompArg[any]
     contact_id: InCompArg[str]
     properties: InArg[list]
 
@@ -124,7 +121,7 @@ class HubSpotGetContact(Component):
             "email", "firstname", "lastname", "phone", "company"
         ]
 
-        result = self.client.value.crm.contacts.basic_api.get_by_id(
+        result = ctx['hubspot_client'].crm.contacts.basic_api.get_by_id(
             contact_id=self.contact_id.value,
             properties=props
         )
@@ -137,8 +134,9 @@ class HubSpotGetContact(Component):
 class HubSpotUpdateContact(Component):
     """Update an existing contact in HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - contact_id: ID of the contact to update.
     - properties: Properties to update as dict.
 
@@ -146,7 +144,6 @@ class HubSpotUpdateContact(Component):
     - contact: Updated contact object.
     """
 
-    client: InCompArg[any]
     contact_id: InCompArg[str]
     properties: InCompArg[dict]
 
@@ -154,7 +151,7 @@ class HubSpotUpdateContact(Component):
 
     def execute(self, ctx) -> None:
         update_input = ContactUpdateInput(properties=self.properties.value)
-        result = self.client.value.crm.contacts.basic_api.update(
+        result = ctx['hubspot_client'].crm.contacts.basic_api.update(
             contact_id=self.contact_id.value,
             simple_public_object_input=update_input
         )
@@ -167,21 +164,21 @@ class HubSpotUpdateContact(Component):
 class HubSpotDeleteContact(Component):
     """Delete a contact from HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - contact_id: ID of the contact to delete.
 
     #### outPorts:
     - success: Boolean indicating if deletion was successful.
     """
 
-    client: InCompArg[any]
     contact_id: InCompArg[str]
 
     success: OutArg[bool]
 
     def execute(self, ctx) -> None:
-        self.client.value.crm.contacts.basic_api.archive(
+        ctx['hubspot_client'].crm.contacts.basic_api.archive(
             contact_id=self.contact_id.value
         )
         self.success.value = True
@@ -192,8 +189,9 @@ class HubSpotDeleteContact(Component):
 class HubSpotListContacts(Component):
     """List contacts from HubSpot with pagination.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - limit: Maximum number of contacts to return (default 100).
     - properties: List of properties to retrieve (optional).
     - after: Cursor for pagination (optional).
@@ -203,7 +201,6 @@ class HubSpotListContacts(Component):
     - next_page: Cursor for next page (if available).
     """
 
-    client: InCompArg[any]
     limit: InArg[int]
     properties: InArg[list]
     after: InArg[str]
@@ -217,7 +214,7 @@ class HubSpotListContacts(Component):
             "email", "firstname", "lastname", "phone", "company"
         ]
 
-        result = self.client.value.crm.contacts.basic_api.get_page(
+        result = ctx['hubspot_client'].crm.contacts.basic_api.get_page(
             limit=limit,
             properties=props,
             after=self.after.value if self.after.value else None
@@ -232,8 +229,9 @@ class HubSpotListContacts(Component):
 class HubSpotSearchContacts(Component):
     """Search for contacts in HubSpot using filters.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - query: Search query string (optional).
     - filters: List of filter dicts with propertyName, operator, value (optional).
     - properties: List of properties to retrieve (optional).
@@ -244,7 +242,6 @@ class HubSpotSearchContacts(Component):
     - total: Total number of matching contacts.
     """
 
-    client: InCompArg[any]
     query: InArg[str]
     filters: InArg[list]
     properties: InArg[list]
@@ -272,7 +269,7 @@ class HubSpotSearchContacts(Component):
                 "filters": self.filters.value
             }]
 
-        result = self.client.value.crm.contacts.search_api.do_search(
+        result = ctx['hubspot_client'].crm.contacts.search_api.do_search(
             public_object_search_request=search_request
         )
 
@@ -287,8 +284,9 @@ class HubSpotSearchContacts(Component):
 class HubSpotCreateCompany(Component):
     """Create a new company in HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - name: Company name.
     - domain: Company website domain (optional).
     - industry: Company industry (optional).
@@ -299,7 +297,6 @@ class HubSpotCreateCompany(Component):
     - company: Full company object.
     """
 
-    client: InCompArg[any]
     name: InCompArg[str]
     domain: InArg[str]
     industry: InArg[str]
@@ -321,7 +318,7 @@ class HubSpotCreateCompany(Component):
             props.update(self.properties.value)
 
         company_input = CompanyInput(properties=props)
-        result = self.client.value.crm.companies.basic_api.create(
+        result = ctx['hubspot_client'].crm.companies.basic_api.create(
             simple_public_object_input_for_create=company_input
         )
 
@@ -334,8 +331,9 @@ class HubSpotCreateCompany(Component):
 class HubSpotGetCompany(Component):
     """Get a company by ID from HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - company_id: ID of the company to retrieve.
     - properties: List of properties to retrieve (optional).
 
@@ -343,7 +341,6 @@ class HubSpotGetCompany(Component):
     - company: Company object as dict.
     """
 
-    client: InCompArg[any]
     company_id: InCompArg[str]
     properties: InArg[list]
 
@@ -354,7 +351,7 @@ class HubSpotGetCompany(Component):
             "name", "domain", "industry", "phone", "city", "state", "country"
         ]
 
-        result = self.client.value.crm.companies.basic_api.get_by_id(
+        result = ctx['hubspot_client'].crm.companies.basic_api.get_by_id(
             company_id=self.company_id.value,
             properties=props
         )
@@ -367,8 +364,9 @@ class HubSpotGetCompany(Component):
 class HubSpotUpdateCompany(Component):
     """Update an existing company in HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - company_id: ID of the company to update.
     - properties: Properties to update as dict.
 
@@ -376,7 +374,6 @@ class HubSpotUpdateCompany(Component):
     - company: Updated company object.
     """
 
-    client: InCompArg[any]
     company_id: InCompArg[str]
     properties: InCompArg[dict]
 
@@ -384,7 +381,7 @@ class HubSpotUpdateCompany(Component):
 
     def execute(self, ctx) -> None:
         update_input = CompanyUpdateInput(properties=self.properties.value)
-        result = self.client.value.crm.companies.basic_api.update(
+        result = ctx['hubspot_client'].crm.companies.basic_api.update(
             company_id=self.company_id.value,
             simple_public_object_input=update_input
         )
@@ -397,21 +394,21 @@ class HubSpotUpdateCompany(Component):
 class HubSpotDeleteCompany(Component):
     """Delete a company from HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - company_id: ID of the company to delete.
 
     #### outPorts:
     - success: Boolean indicating if deletion was successful.
     """
 
-    client: InCompArg[any]
     company_id: InCompArg[str]
 
     success: OutArg[bool]
 
     def execute(self, ctx) -> None:
-        self.client.value.crm.companies.basic_api.archive(
+        ctx['hubspot_client'].crm.companies.basic_api.archive(
             company_id=self.company_id.value
         )
         self.success.value = True
@@ -422,8 +419,9 @@ class HubSpotDeleteCompany(Component):
 class HubSpotListCompanies(Component):
     """List companies from HubSpot with pagination.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - limit: Maximum number of companies to return (default 100).
     - properties: List of properties to retrieve (optional).
     - after: Cursor for pagination (optional).
@@ -433,7 +431,6 @@ class HubSpotListCompanies(Component):
     - next_page: Cursor for next page (if available).
     """
 
-    client: InCompArg[any]
     limit: InArg[int]
     properties: InArg[list]
     after: InArg[str]
@@ -447,7 +444,7 @@ class HubSpotListCompanies(Component):
             "name", "domain", "industry", "phone"
         ]
 
-        result = self.client.value.crm.companies.basic_api.get_page(
+        result = ctx['hubspot_client'].crm.companies.basic_api.get_page(
             limit=limit,
             properties=props,
             after=self.after.value if self.after.value else None
@@ -462,8 +459,9 @@ class HubSpotListCompanies(Component):
 class HubSpotSearchCompanies(Component):
     """Search for companies in HubSpot using filters.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - query: Search query string (optional).
     - filters: List of filter dicts with propertyName, operator, value (optional).
     - properties: List of properties to retrieve (optional).
@@ -474,7 +472,6 @@ class HubSpotSearchCompanies(Component):
     - total: Total number of matching companies.
     """
 
-    client: InCompArg[any]
     query: InArg[str]
     filters: InArg[list]
     properties: InArg[list]
@@ -502,7 +499,7 @@ class HubSpotSearchCompanies(Component):
                 "filters": self.filters.value
             }]
 
-        result = self.client.value.crm.companies.search_api.do_search(
+        result = ctx['hubspot_client'].crm.companies.search_api.do_search(
             public_object_search_request=search_request
         )
 
@@ -517,8 +514,9 @@ class HubSpotSearchCompanies(Component):
 class HubSpotCreateDeal(Component):
     """Create a new deal in HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - dealname: Name of the deal.
     - pipeline: Pipeline ID (optional, uses default if not provided).
     - dealstage: Deal stage ID (optional).
@@ -530,7 +528,6 @@ class HubSpotCreateDeal(Component):
     - deal: Full deal object.
     """
 
-    client: InCompArg[any]
     dealname: InCompArg[str]
     pipeline: InArg[str]
     dealstage: InArg[str]
@@ -555,7 +552,7 @@ class HubSpotCreateDeal(Component):
             props.update(self.properties.value)
 
         deal_input = DealInput(properties=props)
-        result = self.client.value.crm.deals.basic_api.create(
+        result = ctx['hubspot_client'].crm.deals.basic_api.create(
             simple_public_object_input_for_create=deal_input
         )
 
@@ -568,8 +565,9 @@ class HubSpotCreateDeal(Component):
 class HubSpotGetDeal(Component):
     """Get a deal by ID from HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - deal_id: ID of the deal to retrieve.
     - properties: List of properties to retrieve (optional).
 
@@ -577,7 +575,6 @@ class HubSpotGetDeal(Component):
     - deal: Deal object as dict.
     """
 
-    client: InCompArg[any]
     deal_id: InCompArg[str]
     properties: InArg[list]
 
@@ -588,7 +585,7 @@ class HubSpotGetDeal(Component):
             "dealname", "amount", "dealstage", "pipeline", "closedate"
         ]
 
-        result = self.client.value.crm.deals.basic_api.get_by_id(
+        result = ctx['hubspot_client'].crm.deals.basic_api.get_by_id(
             deal_id=self.deal_id.value,
             properties=props
         )
@@ -601,8 +598,9 @@ class HubSpotGetDeal(Component):
 class HubSpotUpdateDeal(Component):
     """Update an existing deal in HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - deal_id: ID of the deal to update.
     - properties: Properties to update as dict.
 
@@ -610,7 +608,6 @@ class HubSpotUpdateDeal(Component):
     - deal: Updated deal object.
     """
 
-    client: InCompArg[any]
     deal_id: InCompArg[str]
     properties: InCompArg[dict]
 
@@ -618,7 +615,7 @@ class HubSpotUpdateDeal(Component):
 
     def execute(self, ctx) -> None:
         update_input = DealUpdateInput(properties=self.properties.value)
-        result = self.client.value.crm.deals.basic_api.update(
+        result = ctx['hubspot_client'].crm.deals.basic_api.update(
             deal_id=self.deal_id.value,
             simple_public_object_input=update_input
         )
@@ -631,21 +628,21 @@ class HubSpotUpdateDeal(Component):
 class HubSpotDeleteDeal(Component):
     """Delete a deal from HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - deal_id: ID of the deal to delete.
 
     #### outPorts:
     - success: Boolean indicating if deletion was successful.
     """
 
-    client: InCompArg[any]
     deal_id: InCompArg[str]
 
     success: OutArg[bool]
 
     def execute(self, ctx) -> None:
-        self.client.value.crm.deals.basic_api.archive(
+        ctx['hubspot_client'].crm.deals.basic_api.archive(
             deal_id=self.deal_id.value
         )
         self.success.value = True
@@ -656,8 +653,9 @@ class HubSpotDeleteDeal(Component):
 class HubSpotListDeals(Component):
     """List deals from HubSpot with pagination.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - limit: Maximum number of deals to return (default 100).
     - properties: List of properties to retrieve (optional).
     - after: Cursor for pagination (optional).
@@ -667,7 +665,6 @@ class HubSpotListDeals(Component):
     - next_page: Cursor for next page (if available).
     """
 
-    client: InCompArg[any]
     limit: InArg[int]
     properties: InArg[list]
     after: InArg[str]
@@ -681,7 +678,7 @@ class HubSpotListDeals(Component):
             "dealname", "amount", "dealstage", "pipeline", "closedate"
         ]
 
-        result = self.client.value.crm.deals.basic_api.get_page(
+        result = ctx['hubspot_client'].crm.deals.basic_api.get_page(
             limit=limit,
             properties=props,
             after=self.after.value if self.after.value else None
@@ -696,8 +693,9 @@ class HubSpotListDeals(Component):
 class HubSpotSearchDeals(Component):
     """Search for deals in HubSpot using filters.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - query: Search query string (optional).
     - filters: List of filter dicts with propertyName, operator, value (optional).
     - properties: List of properties to retrieve (optional).
@@ -708,7 +706,6 @@ class HubSpotSearchDeals(Component):
     - total: Total number of matching deals.
     """
 
-    client: InCompArg[any]
     query: InArg[str]
     filters: InArg[list]
     properties: InArg[list]
@@ -736,7 +733,7 @@ class HubSpotSearchDeals(Component):
                 "filters": self.filters.value
             }]
 
-        result = self.client.value.crm.deals.search_api.do_search(
+        result = ctx['hubspot_client'].crm.deals.search_api.do_search(
             public_object_search_request=search_request
         )
 
@@ -751,8 +748,9 @@ class HubSpotSearchDeals(Component):
 class HubSpotAssociateObjects(Component):
     """Create an association between two HubSpot objects.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - from_object_type: Type of the source object (contacts, companies, deals).
     - from_object_id: ID of the source object.
     - to_object_type: Type of the target object (contacts, companies, deals).
@@ -763,7 +761,6 @@ class HubSpotAssociateObjects(Component):
     - success: Boolean indicating if association was created.
     """
 
-    client: InCompArg[any]
     from_object_type: InCompArg[str]
     from_object_id: InCompArg[str]
     to_object_type: InCompArg[str]
@@ -791,7 +788,7 @@ class HubSpotAssociateObjects(Component):
         assoc_type = self.association_type.value if self.association_type.value else \
             default_types.get((from_type, to_type), f"{from_type}_to_{to_type}")
 
-        self.client.value.crm.associations.v4.basic_api.create(
+        ctx['hubspot_client'].crm.associations.v4.basic_api.create(
             object_type=from_type,
             object_id=self.from_object_id.value,
             to_object_type=to_type,
@@ -822,8 +819,9 @@ class HubSpotAssociateObjects(Component):
 class HubSpotGetAssociations(Component):
     """Get associations for a HubSpot object.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - object_type: Type of the source object (contacts, companies, deals).
     - object_id: ID of the source object.
     - to_object_type: Type of associated objects to retrieve.
@@ -832,7 +830,6 @@ class HubSpotGetAssociations(Component):
     - associations: List of associated object IDs.
     """
 
-    client: InCompArg[any]
     object_type: InCompArg[str]
     object_id: InCompArg[str]
     to_object_type: InCompArg[str]
@@ -840,7 +837,7 @@ class HubSpotGetAssociations(Component):
     associations: OutArg[list]
 
     def execute(self, ctx) -> None:
-        result = self.client.value.crm.associations.v4.basic_api.get_page(
+        result = ctx['hubspot_client'].crm.associations.v4.basic_api.get_page(
             object_type=self.object_type.value.lower(),
             object_id=self.object_id.value,
             to_object_type=self.to_object_type.value.lower()
@@ -859,8 +856,9 @@ class HubSpotGetAssociations(Component):
 class HubSpotCreateNote(Component):
     """Create a note engagement in HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - body: Note body/content.
     - contact_id: ID of contact to associate note with (optional).
     - company_id: ID of company to associate note with (optional).
@@ -871,7 +869,6 @@ class HubSpotCreateNote(Component):
     - note: Full note object.
     """
 
-    client: InCompArg[any]
     body: InCompArg[str]
     contact_id: InArg[str]
     company_id: InArg[str]
@@ -904,7 +901,7 @@ class HubSpotCreateNote(Component):
             })
 
         note_input = NoteInput(properties=props, associations=associations if associations else None)
-        result = self.client.value.crm.objects.notes.basic_api.create(
+        result = ctx['hubspot_client'].crm.objects.notes.basic_api.create(
             simple_public_object_input_for_create=note_input
         )
 
@@ -917,8 +914,9 @@ class HubSpotCreateNote(Component):
 class HubSpotCreateTask(Component):
     """Create a task in HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - subject: Task subject/title.
     - body: Task body/description (optional).
     - due_date: Due date as ISO string (optional).
@@ -933,7 +931,6 @@ class HubSpotCreateTask(Component):
     - task: Full task object.
     """
 
-    client: InCompArg[any]
     subject: InCompArg[str]
     body: InArg[str]
     due_date: InArg[str]
@@ -978,7 +975,7 @@ class HubSpotCreateTask(Component):
             })
 
         task_input = TaskInput(properties=props, associations=associations if associations else None)
-        result = self.client.value.crm.objects.tasks.basic_api.create(
+        result = ctx['hubspot_client'].crm.objects.tasks.basic_api.create(
             simple_public_object_input_for_create=task_input
         )
 
@@ -993,15 +990,15 @@ class HubSpotCreateTask(Component):
 class HubSpotGetPipelines(Component):
     """Get all pipelines for an object type from HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - object_type: Object type (deals or tickets).
 
     #### outPorts:
     - pipelines: List of pipeline objects with stages.
     """
 
-    client: InCompArg[any]
     object_type: InArg[str]
 
     pipelines: OutArg[list]
@@ -1009,7 +1006,7 @@ class HubSpotGetPipelines(Component):
     def execute(self, ctx) -> None:
         obj_type = self.object_type.value if self.object_type.value else "deals"
 
-        result = self.client.value.crm.pipelines.pipelines_api.get_all(
+        result = ctx['hubspot_client'].crm.pipelines.pipelines_api.get_all(
             object_type=obj_type
         )
 
@@ -1023,21 +1020,21 @@ class HubSpotGetPipelines(Component):
 class HubSpotGetOwners(Component):
     """Get all owners from HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - email: Filter by owner email (optional).
 
     #### outPorts:
     - owners: List of owner objects.
     """
 
-    client: InCompArg[any]
     email: InArg[str]
 
     owners: OutArg[list]
 
     def execute(self, ctx) -> None:
-        result = self.client.value.crm.owners.owners_api.get_page(
+        result = ctx['hubspot_client'].crm.owners.owners_api.get_page(
             email=self.email.value if self.email.value else None
         )
 
@@ -1051,21 +1048,21 @@ class HubSpotGetOwners(Component):
 class HubSpotGetProperties(Component):
     """Get all properties for an object type from HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - object_type: Object type (contacts, companies, deals, etc.).
 
     #### outPorts:
     - properties: List of property definitions.
     """
 
-    client: InCompArg[any]
     object_type: InCompArg[str]
 
     properties: OutArg[list]
 
     def execute(self, ctx) -> None:
-        result = self.client.value.crm.properties.core_api.get_all(
+        result = ctx['hubspot_client'].crm.properties.core_api.get_all(
             object_type=self.object_type.value
         )
 
@@ -1077,8 +1074,9 @@ class HubSpotGetProperties(Component):
 class HubSpotCreateProperty(Component):
     """Create a custom property for an object type in HubSpot.
 
+    Requires HubSpotClient to be executed first to initialize the client in context.
+
     #### inPorts:
-    - client: HubSpot client instance.
     - object_type: Object type (contacts, companies, deals, etc.).
     - name: Internal property name.
     - label: Display label for the property.
@@ -1092,7 +1090,6 @@ class HubSpotCreateProperty(Component):
     - property: Created property definition.
     """
 
-    client: InCompArg[any]
     object_type: InCompArg[str]
     name: InCompArg[str]
     label: InCompArg[str]
@@ -1117,7 +1114,7 @@ class HubSpotCreateProperty(Component):
             options=self.options.value if self.options.value else None
         )
 
-        result = self.client.value.crm.properties.core_api.create(
+        result = ctx['hubspot_client'].crm.properties.core_api.create(
             object_type=self.object_type.value,
             property_create=property_input
         )
