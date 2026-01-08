@@ -1,0 +1,19 @@
+[project]
+name = "xai-hubspot"
+version = "0.1.0"
+description = "Xircuits component library for HubSpot CRM integration."
+authors = [{ name = "XpressAI", email = "eduardo@xpress.ai" }]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/XpressAI/xai-hubspot"
+keywords = ["xircuits", "HubSpot", "CRM", "integration", "automation"]
+
+dependencies = [
+    "hubspot-api-client==11.1.0",
+    "python-dotenv==1.0.1",
+    "requests==2.31.0"
+]
+
+# Xircuits-specific configurations
+[tool.xircuits]
+requirements_path = "requirements.txt"
