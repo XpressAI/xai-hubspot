@@ -21,8 +21,8 @@ import json
 # ==================== CLIENT INITIALIZATION ====================
 
 @xai_component
-class HubSpotClient(Component):
-    """Initialize a HubSpot API client and store it in context.
+class HubSpotAuthorize(Component):
+    """Authorize with HubSpot API and store the client in context.
 
     Creates a HubSpot client instance and stores it in ctx['hubspot_client']
     for use by all other HubSpot components. This component should be used
@@ -37,7 +37,7 @@ class HubSpotClient(Component):
     def execute(self, ctx) -> None:
         client = HubSpot(access_token=self.access_token.value)
         ctx['hubspot_client'] = client
-        print("HubSpot client initialized and stored in context")
+        print("HubSpot authorized and client stored in context")
 
 
 # ==================== CONTACT COMPONENTS ====================
@@ -46,7 +46,7 @@ class HubSpotClient(Component):
 class HubSpotCreateContact(Component):
     """Create a new contact in HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - email: Contact email address.
@@ -101,7 +101,7 @@ class HubSpotCreateContact(Component):
 class HubSpotGetContact(Component):
     """Get a contact by ID from HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - contact_id: ID of the contact to retrieve.
@@ -134,7 +134,7 @@ class HubSpotGetContact(Component):
 class HubSpotUpdateContact(Component):
     """Update an existing contact in HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - contact_id: ID of the contact to update.
@@ -164,7 +164,7 @@ class HubSpotUpdateContact(Component):
 class HubSpotDeleteContact(Component):
     """Delete a contact from HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - contact_id: ID of the contact to delete.
@@ -189,7 +189,7 @@ class HubSpotDeleteContact(Component):
 class HubSpotListContacts(Component):
     """List contacts from HubSpot with pagination.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - limit: Maximum number of contacts to return (default 100).
@@ -229,7 +229,7 @@ class HubSpotListContacts(Component):
 class HubSpotSearchContacts(Component):
     """Search for contacts in HubSpot using filters.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - query: Search query string (optional).
@@ -284,7 +284,7 @@ class HubSpotSearchContacts(Component):
 class HubSpotCreateCompany(Component):
     """Create a new company in HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - name: Company name.
@@ -331,7 +331,7 @@ class HubSpotCreateCompany(Component):
 class HubSpotGetCompany(Component):
     """Get a company by ID from HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - company_id: ID of the company to retrieve.
@@ -364,7 +364,7 @@ class HubSpotGetCompany(Component):
 class HubSpotUpdateCompany(Component):
     """Update an existing company in HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - company_id: ID of the company to update.
@@ -394,7 +394,7 @@ class HubSpotUpdateCompany(Component):
 class HubSpotDeleteCompany(Component):
     """Delete a company from HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - company_id: ID of the company to delete.
@@ -419,7 +419,7 @@ class HubSpotDeleteCompany(Component):
 class HubSpotListCompanies(Component):
     """List companies from HubSpot with pagination.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - limit: Maximum number of companies to return (default 100).
@@ -459,7 +459,7 @@ class HubSpotListCompanies(Component):
 class HubSpotSearchCompanies(Component):
     """Search for companies in HubSpot using filters.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - query: Search query string (optional).
@@ -514,7 +514,7 @@ class HubSpotSearchCompanies(Component):
 class HubSpotCreateDeal(Component):
     """Create a new deal in HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - dealname: Name of the deal.
@@ -565,7 +565,7 @@ class HubSpotCreateDeal(Component):
 class HubSpotGetDeal(Component):
     """Get a deal by ID from HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - deal_id: ID of the deal to retrieve.
@@ -598,7 +598,7 @@ class HubSpotGetDeal(Component):
 class HubSpotUpdateDeal(Component):
     """Update an existing deal in HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - deal_id: ID of the deal to update.
@@ -628,7 +628,7 @@ class HubSpotUpdateDeal(Component):
 class HubSpotDeleteDeal(Component):
     """Delete a deal from HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - deal_id: ID of the deal to delete.
@@ -653,7 +653,7 @@ class HubSpotDeleteDeal(Component):
 class HubSpotListDeals(Component):
     """List deals from HubSpot with pagination.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - limit: Maximum number of deals to return (default 100).
@@ -693,7 +693,7 @@ class HubSpotListDeals(Component):
 class HubSpotSearchDeals(Component):
     """Search for deals in HubSpot using filters.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - query: Search query string (optional).
@@ -748,7 +748,7 @@ class HubSpotSearchDeals(Component):
 class HubSpotAssociateObjects(Component):
     """Create an association between two HubSpot objects.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - from_object_type: Type of the source object (contacts, companies, deals).
@@ -819,7 +819,7 @@ class HubSpotAssociateObjects(Component):
 class HubSpotGetAssociations(Component):
     """Get associations for a HubSpot object.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - object_type: Type of the source object (contacts, companies, deals).
@@ -856,7 +856,7 @@ class HubSpotGetAssociations(Component):
 class HubSpotCreateNote(Component):
     """Create a note engagement in HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - body: Note body/content.
@@ -914,7 +914,7 @@ class HubSpotCreateNote(Component):
 class HubSpotCreateTask(Component):
     """Create a task in HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - subject: Task subject/title.
@@ -990,7 +990,7 @@ class HubSpotCreateTask(Component):
 class HubSpotGetPipelines(Component):
     """Get all pipelines for an object type from HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - object_type: Object type (deals or tickets).
@@ -1020,7 +1020,7 @@ class HubSpotGetPipelines(Component):
 class HubSpotGetOwners(Component):
     """Get all owners from HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - email: Filter by owner email (optional).
@@ -1048,7 +1048,7 @@ class HubSpotGetOwners(Component):
 class HubSpotGetProperties(Component):
     """Get all properties for an object type from HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - object_type: Object type (contacts, companies, deals, etc.).
@@ -1074,7 +1074,7 @@ class HubSpotGetProperties(Component):
 class HubSpotCreateProperty(Component):
     """Create a custom property for an object type in HubSpot.
 
-    Requires HubSpotClient to be executed first to initialize the client in context.
+    Requires HubSpotAuthorize to be executed first to initialize the client in context.
 
     #### inPorts:
     - object_type: Object type (contacts, companies, deals, etc.).
